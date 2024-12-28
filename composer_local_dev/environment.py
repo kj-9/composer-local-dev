@@ -871,6 +871,21 @@ class Environment:
         result = container.exec_run(cmd=command)
         console.get_console().print(result.output.decode())
 
+
+    def run_command(self, command: List) -> None:
+        """
+        Run command list in the environment container.
+        """
+        container = self.get_container(assert_running=True)
+        command.insert(0, "/home/airflow/run_as_user.sh")
+        result = container.exec_run(cmd=command)
+        console.get_console().print(result.output.decode())
+
+        exit_code = result.exit_code
+        if exit_code != 0:
+            
+            raise RuntimeError(f"Command failed with exit code {exit_code}")
+
     def get_host_port(self) -> int:
         """
         Return port of the running environment. If it fails to retrieve it,

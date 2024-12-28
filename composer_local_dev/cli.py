@@ -598,3 +598,38 @@ def list_available_versions(
     versions = utils.sort_and_limit_image_versions(filtered, limit)
     table = utils.get_image_versions_table(versions)
     console.get_console().print(table)
+
+# ignore_unknown_options is required to be able to pass options to airflow cmd
+@cli.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+    )
+)
+@required_environment
+@verbose_mode
+@debug_mode
+@click.argument(
+    "command",
+    nargs=-1,
+    required=True,
+    metavar="COMMAND",
+    type=click.UNPROCESSED,
+)
+@errors.catch_exceptions()
+def run_cmd(
+    environment: Optional[str], command: List[str], verbose: bool, debug: bool
+):
+    """
+    Run command in container.
+
+    Command is executed in the selected, running environment. Examples:
+
+    > composer-dev run-airflow-cmd env_name ls -la
+
+    > composer-dev run-airflow-cmd env_name pytest gcs/dags/
+
+    """
+    utils.setup_logging(verbose, debug)
+    env_path = files.resolve_environment_path(environment)
+    env = composer_environment.Environment.load_from_config(env_path, None)
+    env.run_command([*command])
